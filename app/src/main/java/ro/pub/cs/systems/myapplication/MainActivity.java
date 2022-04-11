@@ -2,7 +2,10 @@ package ro.pub.cs.systems.myapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -17,7 +20,17 @@ public class MainActivity extends AppCompatActivity {
   int buttonClicks;
     private ButtonClickListener buttonClickListener = new ButtonClickListener();
     private TextView print;
+    int serviceStatus = 0;
     private Button secondActiv;
+    private IntentFilter intentFilter = new IntentFilter();
+    private MessageBroadcastReceiver messageBroadcastReceiver = new MessageBroadcastReceiver();
+    private class MessageBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("tag","esafffr");
+            Log.d(Constants.BROADCAST_RECEIVER_TAG, intent.getStringExtra(Constants.BROADCAST_RECEIVER_EXTRA));
+        }
+    }
     private class ButtonClickListener implements View.OnClickListener {
         @Override
         public void onClick(View view) {
@@ -57,6 +70,12 @@ public class MainActivity extends AppCompatActivity {
                 buttonClicks = 0;
                 print.setText("");
             }
+            if (buttonClicks >= 3 && serviceStatus == Constants.SERVICE_STOPPED) {
+                Intent intent = new Intent(getApplicationContext(), MyService.class);
+                intent.putExtra(Constants.INSTRUCTIONS, print.getText().toString());
+                getApplicationContext().startService(intent);
+                serviceStatus = Constants.SERVICE_STARTED;
+            }
 
         }
     }
@@ -76,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         secondActiv = (Button) findViewById(R.id.button6) ;
         secondActiv.setOnClickListener(buttonClickListener);
         print = (TextView) findViewById(R.id.print_text);
-
+        intentFilter.addAction(Constants.actionTypes[0]);
         buttonClicks = 0;
 
 
@@ -101,5 +120,23 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == 2) {
             Toast.makeText(this, "The activity returned with result " + resultCode, Toast.LENGTH_LONG).show();
         }
+    }
+    @Override
+    protected void onDestroy() {
+        Intent intent = new Intent(this, MyService.class);
+        stopService(intent);
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(messageBroadcastReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        unregisterReceiver(messageBroadcastReceiver);
+        super.onPause();
     }
 }
