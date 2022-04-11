@@ -1,4 +1,4 @@
-package ro.pub.cs.systems.eim;
+package ro.pub.cs.systems.myapplication;
 
 import org.junit.Test;
 
